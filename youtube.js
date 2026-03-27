@@ -79,15 +79,21 @@ export class YouTubeService {
             }
         });
 
-        if (res.status === 401) {
-            // Token expired, remove it
-            this.tokens = this.tokens.filter(t => t !== token);
-            localStorage.setItem('yt_access_tokens', JSON.stringify(this.tokens));
-            if (this.tokens.length === 0) this.isAuthenticated = false;
-            throw new Error('Unauthorized');
+        const data = await res.json();
+
+        if (!res.ok) {
+            console.error('API Error Response:', data);
+            if (res.status === 401) {
+                this.tokens = this.tokens.filter(t => t !== token);
+                localStorage.setItem('yt_access_tokens', JSON.stringify(this.tokens));
+                if (this.tokens.length === 0) this.isAuthenticated = false;
+                throw new Error('Unauthorized');
+            }
+            const msg = data.error ? data.error.message : 'Unknown API error';
+            throw new Error(`API Error ${res.status}: ${msg}`);
         }
 
-        return await res.json();
+        return data;
     }
 
     async getChannels() {
