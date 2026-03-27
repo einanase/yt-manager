@@ -71,6 +71,17 @@ export class YouTubeService {
     async fetchAPI(token, endpoint, params = {}) {
         const url = new URL(`https://www.googleapis.com/youtube/v3/${endpoint}`);
         Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+        
+        // Cache Check (5 minutes)
+        const cacheKey = `yt_cache_${endpoint}_${JSON.stringify(params)}_${token.substring(0, 10)}`;
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+            const { data, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp < 5 * 60 * 1000) {
+                console.log(`Using cached data for ${endpoint}`);
+                return data;
+            }
+        }
 
         const res = await fetch(url, {
             headers: {
@@ -89,10 +100,17 @@ export class YouTubeService {
                 if (this.tokens.length === 0) this.isAuthenticated = false;
                 throw new Error('Unauthorized');
             }
+            if (res.status === 403 && data.error?.message?.includes('quota')) {
+                const quotaMsg = 'YouTube APIの「1日の利用制限（クォータ）」を超えました。通常、日本時間の夕方〜夜頃にリセットされます。Google Cloud Consoleの「割り当て」ページで制限を増やすか、リセットを待ってください。';
+                alert(quotaMsg);
+                throw new Error(quotaMsg);
+            }
             const msg = data.error ? data.error.message : 'Unknown API error';
             throw new Error(`API Error ${res.status}: ${msg}`);
         }
 
+        // Save to cache
+        sessionStorage.setItem(cacheKey, JSON.stringify({ data, timestamp: Date.now() }));
         return data;
     }
 
