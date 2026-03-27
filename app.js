@@ -164,21 +164,36 @@ class App {
         const nav = document.getElementById('channel-nav');
         const mobileNavList = document.getElementById('mobile-nav-list');
         
-        const navHtml = channels.map(channel => `
-            <div class="nav-item ${channel.id === this.currentChannelId ? 'active' : ''}" data-id="${channel.id}" data-token="${channel.token}">
-                <i data-lucide="play-circle"></i>
-                <span>${channel.name}</span>
-            </div>
-        `).join('');
+        if (channels.length === 0 || (channels.length === 1 && channels[0].id === 'UC-EMPTY')) {
+            const emptyHtml = `<div class="nav-item disabled" style="opacity:0.6; pointer-events:none;">
+                <i data-lucide="alert-circle"></i>
+                <span>チャンネル未作成</span>
+            </div>`;
+            if (nav) nav.innerHTML = emptyHtml;
+            if (mobileNavList) mobileNavList.innerHTML = emptyHtml;
+            
+            // Show alert for first-time or failed logins
+            if (this.channels.length > 0 && channels[0].id === 'UC-EMPTY') {
+                alert('YouTubeチャンネルが見つかりませんでした。\n・正しいGoogleアカウントを選んでいるか\n・そのアカウントでYouTubeチャンネルを作成済みか\nを確認してください。');
+            }
+        } else {
+            const navHtml = channels.map(channel => `
+                <div class="nav-item ${channel.id === this.currentChannelId ? 'active' : ''}" data-id="${channel.id}" data-token="${channel.token}">
+                    <i data-lucide="play-circle"></i>
+                    <span>${channel.name}</span>
+                </div>
+            `).join('');
 
-        if (nav) nav.innerHTML = navHtml;
-        if (mobileNavList) mobileNavList.innerHTML = navHtml;
+            if (nav) nav.innerHTML = navHtml;
+            if (mobileNavList) mobileNavList.innerHTML = navHtml;
+        }
 
         document.querySelectorAll('.nav-item').forEach(item => {
+            if (item.classList.contains('disabled')) return;
             item.addEventListener('click', () => {
                 const id = item.getAttribute('data-id');
                 const token = item.getAttribute('data-token');
-                this.selectChannel(id, token);
+                this.selectChannel(id, token, 'next');
                 const overlay = document.getElementById('mobile-nav-overlay');
                 if (overlay) overlay.style.display = 'none';
             });
