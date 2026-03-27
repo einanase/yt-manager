@@ -89,42 +89,65 @@ class App {
 
     async loadChannels() {
         this.channels = await this.service.getChannels();
-        this.renderChannelNav();
         
         // Auto-select first channel or keep current
         if (this.channels.length > 0) {
             const preserved = this.currentChannel ? this.channels.find(c => c.id === this.currentChannel.id) : null;
-            this.selectChannel(preserved ? preserved.id : this.channels[0].id);
+            this.selectChannel(preserved ? preserved.id : this.channels[0].id, preserved ? preserved.token : this.channels[0].token); // Updated
+        }
+        this.renderChannelNav(this.channels); // Updated
+    }
+
+    setupMobileNav() {
+        const title = document.getElementById('current-channel-name');
+        const overlay = document.getElementById('mobile-nav-overlay');
+        
+        if (title && overlay) { // Added null checks
+            title.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    overlay.style.display = 'block';
+                }
+            });
+
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.style.display = 'none';
+            });
         }
     }
 
-    renderChannelNav() {
+    renderChannelNav(channels) { // Updated signature
         const nav = document.getElementById('channel-nav');
-        if (!nav) return;
-
-        nav.innerHTML = this.channels.map(channel => `
-            <div class="nav-item ${this.currentChannel?.id === channel.id ? 'active' : ''}" 
-                 data-channel-id="${channel.id}">
-                <i data-lucide="monitor"></i>
+        const mobileNavList = document.getElementById('mobile-nav-list'); // Added
+        
+        const navHtml = channels.map(channel => `
+            <div class="nav-item ${channel.id === this.currentChannelId ? 'active' : ''}" data-id="${channel.id}" data-token="${channel.token}">
+                <i data-lucide="monitor"></i> <!-- Changed from play-circle to monitor for consistency -->
                 <span>${channel.name}</span>
             </div>
         `).join('');
 
-        // Add click events to nav items
-        nav.querySelectorAll('.nav-item').forEach(item => {
+        if (nav) nav.innerHTML = navHtml; // Added null check
+        if (mobileNavList) mobileNavList.innerHTML = navHtml; // Added
+
+        document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', () => {
-                this.selectChannel(item.getAttribute('data-channel-id'));
+                const id = item.getAttribute('data-id');
+                const token = item.getAttribute('data-token');
+                this.selectChannel(id, token);
+                const overlay = document.getElementById('mobile-nav-overlay'); // Added
+                if (overlay) overlay.style.display = 'none'; // Added
             });
         });
 
         if (window.lucide) window.lucide.createIcons();
     }
 
-    async selectChannel(channelId) {
-        this.currentChannel = this.channels.find(c => c.id === channelId);
+    async selectChannel(id, token) { // Updated signature
+        this.currentChannel = this.channels.find(c => c.id === id); // Updated
+        this.currentChannelId = id; // Added
         if (!this.currentChannel) return;
         
-        this.renderChannelNav();
+        this.renderChannelNav(this.channels); // Updated
 
         const header = document.getElementById('current-channel-name');
         if (header) header.textContent = this.currentChannel.name;
