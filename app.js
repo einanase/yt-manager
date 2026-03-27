@@ -267,33 +267,43 @@ class App {
         window.requestAnimationFrame(step);
         // Add Swipe Support for Mobile
         let touchStartX = 0;
+        let touchStartY = 0;
         let touchEndX = 0;
+        let touchEndY = 0;
 
         document.addEventListener('touchstart', (e) => {
             touchStartX = e.changedTouches[0].screenX;
-        }, false);
+            touchStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
 
         document.addEventListener('touchend', (e) => {
             touchEndX = e.changedTouches[0].screenX;
-            this.handleSwipe(touchStartX, touchEndX);
-        }, false);
+            touchEndY = e.changedTouches[0].screenY;
+            this.handleSwipe(touchStartX, touchStartY, touchEndX, touchEndY);
+        }, { passive: true });
     }
 
-    handleSwipe(start, end) {
-        const threshold = 100; // Minimum swipe distance
-        if (this.channels.length <= 1) return;
+    handleSwipe(startX, startY, endX, endY) {
+        const thresholdX = 50; // Use small threshold for better sensitivity
+        const thresholdY = 30; // Max vertical movement to count as horizontal swipe
+        
+        const diffX = endX - startX;
+        const diffY = endY - startY;
 
-        const currentIndex = this.channels.findIndex(c => c.id === this.currentChannelId);
-        if (currentIndex === -1) return;
+        if (Math.abs(diffX) > thresholdX && Math.abs(diffY) < thresholdY) {
+            if (this.channels.length <= 1) return;
+            const currentIndex = this.channels.findIndex(c => c.id === this.currentChannelId);
+            if (currentIndex === -1) return;
 
-        if (start - end > threshold) {
-            // Swipe Left -> Next Channel
-            const nextIndex = (currentIndex + 1) % this.channels.length;
-            this.selectChannel(this.channels[nextIndex].id, this.channels[nextIndex].token);
-        } else if (end - start > threshold) {
-            // Swipe Right -> Previous Channel
-            const prevIndex = (currentIndex - 1 + this.channels.length) % this.channels.length;
-            this.selectChannel(this.channels[prevIndex].id, this.channels[prevIndex].token);
+            if (diffX < 0) {
+                // Swipe Left -> Next
+                const nextIndex = (currentIndex + 1) % this.channels.length;
+                this.selectChannel(this.channels[nextIndex].id, this.channels[nextIndex].token);
+            } else {
+                // Swipe Right -> Previous
+                const prevIndex = (currentIndex - 1 + this.channels.length) % this.channels.length;
+                this.selectChannel(this.channels[prevIndex].id, this.channels[prevIndex].token);
+            }
         }
     }
 }
