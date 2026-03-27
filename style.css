@@ -355,7 +355,7 @@ td {
         padding: 0 15px;
     }
 
-    .logo, .btn span {
+    .logo {
         display: none;
     }
 
@@ -410,7 +410,26 @@ td {
     }
 
     .main-content {
-        padding: 16px 16px 120px 16px; /* Increased bottom padding */
+        padding: 16px;
+        overflow-x: hidden; /* Prevent horizontal scroll during animation */
+        position: relative;
+    }
+
+    /* Swipe Animation Classes */
+    .slide-in-right {
+        animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .slide-in-left {
+        animation: slideInLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideInRight {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideInLeft {
+        from { transform: translateX(-100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
     }
 
     .dashboard-grid {

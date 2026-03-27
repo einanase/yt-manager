@@ -139,11 +139,11 @@ class App {
             if (diffX < 0) {
                 // Swipe Left -> Next
                 const nextIndex = (currentIndex + 1) % this.channels.length;
-                this.selectChannel(this.channels[nextIndex].id, this.channels[nextIndex].token);
+                this.selectChannel(this.channels[nextIndex].id, this.channels[nextIndex].token, 'next');
             } else {
                 // Swipe Right -> Previous
                 const prevIndex = (currentIndex - 1 + this.channels.length) % this.channels.length;
-                this.selectChannel(this.channels[prevIndex].id, this.channels[prevIndex].token);
+                this.selectChannel(this.channels[prevIndex].id, this.channels[prevIndex].token, 'prev');
             }
         }
     }
@@ -187,7 +187,7 @@ class App {
         if (window.lucide) window.lucide.createIcons();
     }
 
-    async selectChannel(id, token) {
+    async selectChannel(id, token, direction = null) {
         this.currentChannel = this.channels.find(c => c.id === id);
         this.currentChannelId = id;
         if (!this.currentChannel) return;
@@ -197,6 +197,14 @@ class App {
 
         const header = document.getElementById('current-channel-name');
         if (header) header.textContent = this.currentChannel.name;
+
+        // Apply animation on mobile
+        const main = document.querySelector('.main-content');
+        if (window.innerWidth <= 768 && direction) {
+            main.classList.remove('slide-in-right', 'slide-in-left');
+            void main.offsetWidth; // Force reflow
+            main.classList.add(direction === 'next' ? 'slide-in-right' : 'slide-in-left');
+        }
 
         await Promise.all([
             this.updateStats(id, token),
