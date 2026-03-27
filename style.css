@@ -342,16 +342,17 @@ td {
 
     .sidebar {
         width: 100%;
-        height: auto;
+        height: 70px; /* Fixed height for consistency */
         flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        padding: 12px 16px;
+        gap: 10px;
         position: fixed;
         bottom: 0;
-        top: auto;
-        border-right: none;
+        left: 0;
+        background: rgba(15, 15, 20, 0.95);
+        backdrop-filter: blur(20px);
+        z-index: 2000; /* Super high to prevent overlap issues */
         border-top: 1px solid var(--card-border);
+        padding: 0 15px;
     }
 
     .logo, .btn span {
@@ -388,15 +389,28 @@ td {
         flex-direction: row;
         overflow-x: auto;
         padding: 0;
-        flex: 1; /* Allow nav to take remaining space */
+        flex: 1;
+        height: 100%;
+        align-items: center;
+        scrollbar-width: none; /* Hide scrollbar for cleaner look */
+    }
+
+    .channel-nav::-webkit-scrollbar {
+        display: none;
     }
 
     .nav-item {
-        padding: 10px;
+        padding: 8px 12px;
+        white-space: nowrap;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
     }
 
     .main-content {
-        padding: 16px 16px 80px 16px;
+        padding: 16px 16px 120px 16px; /* Increased bottom padding */
     }
 
     .dashboard-grid {
