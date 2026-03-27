@@ -265,6 +265,36 @@ class App {
             }
         };
         window.requestAnimationFrame(step);
+        // Add Swipe Support for Mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, false);
+
+        document.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            this.handleSwipe(touchStartX, touchEndX);
+        }, false);
+    }
+
+    handleSwipe(start, end) {
+        const threshold = 100; // Minimum swipe distance
+        if (this.channels.length <= 1) return;
+
+        const currentIndex = this.channels.findIndex(c => c.id === this.currentChannelId);
+        if (currentIndex === -1) return;
+
+        if (start - end > threshold) {
+            // Swipe Left -> Next Channel
+            const nextIndex = (currentIndex + 1) % this.channels.length;
+            this.selectChannel(this.channels[nextIndex].id, this.channels[nextIndex].token);
+        } else if (end - start > threshold) {
+            // Swipe Right -> Previous Channel
+            const prevIndex = (currentIndex - 1 + this.channels.length) % this.channels.length;
+            this.selectChannel(this.channels[prevIndex].id, this.channels[prevIndex].token);
+        }
     }
 }
 
