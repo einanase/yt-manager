@@ -82,7 +82,9 @@ export class YouTubeService {
     }
 
     async getChannels() {
-        if (!this.isAuthenticated) {
+        console.log('Fetching channels... Authenticated:', this.isAuthenticated, 'Tokens count:', this.tokens.length);
+        if (!this.isAuthenticated || this.tokens.length === 0) {
+            console.log('Returning sample data (not authenticated)');
             return [
                 { id: 'UC1', name: 'Gaming (サンプル)', subscribers: 12500, token: null }
             ];
@@ -91,24 +93,34 @@ export class YouTubeService {
         let allChannels = [];
         for (const token of this.tokens) {
             try {
+                console.log('Fetching with token:', token.substring(0, 10) + '...');
                 const data = await this.fetchAPI(token, 'channels', {
                     part: 'snippet,statistics',
                     mine: true
                 });
+
+                if (!data.items || data.items.length === 0) {
+                    console.warn('No channels found for this token');
+                    continue;
+                }
 
                 const channels = data.items.map(item => ({
                     id: item.id,
                     name: item.snippet.title,
                     subscribers: parseInt(item.statistics.subscriberCount),
                     thumbnail: item.snippet.thumbnails.default.url,
-                    token: token // Tie channel to token for subsequent calls
+                    token: token
                 }));
                 allChannels = [...allChannels, ...channels];
             } catch (e) {
-                console.error('Failed to fetch channels for a token', e);
+                console.error('Failed to fetch channels for a token:', e);
             }
         }
-        return allChannels;
+        
+        console.log('Total channels found:', allChannels.length);
+        return allChannels.length > 0 ? allChannels : [
+            { id: 'UC-EMPTY', name: 'チャンネルが見つかりません', subscribers: 0, token: null }
+        ];
     }
 
     async getChannelStats(channelId, token) {
