@@ -200,7 +200,7 @@ class App {
 
         // Apply animation on mobile
         const main = document.querySelector('.main-content');
-        if (window.innerWidth <= 768 && direction) {
+        if (main && window.innerWidth <= 768 && direction) {
             main.classList.remove('slide-in-right', 'slide-in-left');
             void main.offsetWidth; // Force reflow
             main.classList.add(direction === 'next' ? 'slide-in-right' : 'slide-in-left');
