@@ -158,12 +158,14 @@ class App {
 
         body.innerHTML = videos.map(video => {
             const data = analytics[video.id] || { retention: 0, swipeRate: 0 };
-            // Calculate immediate engagement rate (Likes + Comments) / Views
-            const engagement = video.views > 0 ? (((video.likes + video.comments) / video.views) * 100).toFixed(1) : "0.0";
+            // Calculate immediate engagement rate with more precision (fixed(2))
+            const engagement = video.views > 0 ? (((video.likes + video.comments) / video.views) * 100).toFixed(2) : "0.00";
+            const pubDate = new Date(video.publishedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
             
             return `
                 <tr>
                     <td class="video-title" title="${video.title}">${video.title}</td>
+                    <td style="font-size: 0.75rem; color: var(--text-secondary);">${pubDate}</td>
                     <td>${video.views.toLocaleString()}</td>
                     <td>${video.likes.toLocaleString()}</td>
                     <td>${video.comments.toLocaleString()}</td>

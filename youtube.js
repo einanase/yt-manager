@@ -147,6 +147,7 @@ export class YouTubeService {
                 return {
                     id: item.id,
                     title: item.snippet.title,
+                    publishedAt: item.snippet.publishedAt,
                     views: parseInt(item.statistics.viewCount),
                     likes: parseInt(item.statistics.likeCount || 0),
                     comments: parseInt(item.statistics.commentCount || 0)
