@@ -354,14 +354,41 @@ td {
         border-top: 1px solid var(--card-border);
     }
 
-    .logo, .sidebar-footer, .btn span {
+    .logo, .btn span {
         display: none;
+    }
+
+    .sidebar-footer {
+        flex-direction: row;
+        gap: 12px;
+        margin-top: 0;
+        padding-top: 0;
+        border-top: none;
+    }
+
+    .sidebar-footer .btn {
+        padding: 10px;
+        min-width: 44px;
+        height: 44px;
+        justify-content: center;
+    }
+
+    .user-profile {
+        margin-top: 0;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .auth-status {
+        display: none; /* Hide status text on mobile to save space */
     }
 
     .channel-nav {
         flex-direction: row;
         overflow-x: auto;
         padding: 0;
+        flex: 1; /* Allow nav to take remaining space */
     }
 
     .nav-item {
