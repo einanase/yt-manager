@@ -4,7 +4,12 @@
 
 export class YouTubeService {
     constructor() {
-        this.clientId = localStorage.getItem('yt_client_id') || '';
+        this.clientId = '581945076599-45t9ig7ufolggljcjrutglne1cjnqgqu.apps.googleusercontent.com';
+        this.scopes = [
+            'https://www.googleapis.com/auth/youtube.force-ssl',
+            'https://www.googleapis.com/auth/youtube.readonly',
+            'https://www.googleapis.com/auth/yt-analytics.readonly'
+        ];
         // Store multiple tokens as an array of objects: [{ token: '...', email: '...' }]
         this.tokens = JSON.parse(localStorage.getItem('yt_access_tokens')) || [];
         this.isAuthenticated = this.tokens.length > 0;
