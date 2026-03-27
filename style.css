@@ -70,6 +70,13 @@ h1, h2, h3, .logo-icon {
     z-index: 100;
 }
 
+/* Ensure sidebar is visible on desktop */
+@media (min-width: 769px) {
+    .sidebar {
+        display: flex !important;
+    }
+}
+
 .logo {
     display: flex;
     align-items: center;
@@ -370,6 +377,11 @@ td {
 
     #current-channel-name:active {
         opacity: 0.7;
+    }
+
+    /* Redundant nav items in sidebar for mobile - hide them as we use overlay */
+    .sidebar .nav-item {
+        display: none;
     }
 
     .logo {
