@@ -355,6 +355,23 @@ td {
         padding: 0 15px;
     }
 
+    .top-header h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        letter-spacing: -0.02em;
+    }
+
+    #current-channel-name {
+        padding: 4px 0;
+        border-radius: 8px;
+        transition: opacity 0.2s;
+    }
+
+    #current-channel-name:active {
+        opacity: 0.7;
+    }
+
     .logo {
         display: none;
     }
