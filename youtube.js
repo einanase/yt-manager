@@ -30,21 +30,30 @@ export class YouTubeService {
 
             const client = window.google.accounts.oauth2.initTokenClient({
                 client_id: this.clientId,
-                scope: 'https://www.googleapis.com/auth/youtube.force-ssl https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/yt-analytics.readonly',
-                prompt: 'select_account', // Always prompt to allow adding another account
+                scope: this.scopes.join(' '),
+                prompt: 'select_account',
                 callback: (response) => {
+                    console.log('Auth response received:', response);
+                    if (response.error) {
+                        console.error('Auth error:', response.error, response.error_description);
+                        reject(response.error);
+                        return;
+                    }
                     if (response.access_token) {
                         const newToken = response.access_token;
-                        // Add to tokens list if not already there (simple check)
                         if (!this.tokens.includes(newToken)) {
                             this.tokens.push(newToken);
+                            console.log('New token added. Total tokens:', this.tokens.length);
+                        } else {
+                            console.log('Token already exists in list');
                         }
                         this.isAuthenticated = true;
                         localStorage.setItem('yt_access_tokens', JSON.stringify(this.tokens));
                         if (this.onAuthChange) this.onAuthChange(true);
                         resolve(newToken);
                     } else {
-                        reject('Auth failed');
+                        console.error('No access_token in response');
+                        reject('Auth failed: No token');
                     }
                 },
             });
