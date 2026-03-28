@@ -269,26 +269,42 @@ export class YouTubeService {
     async getScheduledUploads(channelId, token) {
         if (!token) return [];
 
-        const data = await this.fetchAPI(token, 'search', {
-            part: 'snippet',
-            forMine: true,
-            type: 'video',
-            maxResults: 10
-        });
+        try {
+            // Get the uploads playlist ID (same as getLatestVideos)
+            const channelData = await this.fetchAPI(token, 'channels', {
+                part: 'contentDetails',
+                id: channelId
+            });
+            const uploadsPlaylistId = channelData.items[0].contentDetails.relatedPlaylists.uploads;
 
-        const ids = data.items.map(i => i.id.videoId).join(',');
-        const videoDetails = await this.fetchAPI(token, 'videos', {
-            part: 'snippet,status',
-            id: ids
-        });
+            // Get more items (up to 50) to search for scheduled ones
+            const playlistItems = await this.fetchAPI(token, 'playlistItems', {
+                part: 'contentDetails',
+                playlistId: uploadsPlaylistId,
+                maxResults: 50
+            });
 
-        return videoDetails.items
-            .filter(v => v.status.publishAt)
-            .map(v => ({
-                id: v.id,
-                title: v.snippet.title,
-                scheduledTime: v.status.publishAt
-            }));
+            if (!playlistItems.items || playlistItems.items.length === 0) return [];
+
+            const videoIds = playlistItems.items.map(i => i.contentDetails.videoId).join(',');
+            const videoData = await this.fetchAPI(token, 'videos', {
+                part: 'snippet,status',
+                id: videoIds
+            });
+
+            // Filter for videos that have a scheduled publish time (publishAt)
+            // and have NOT been published yet (privacyStatus is likely 'private')
+            return videoData.items
+                .filter(v => v.status && v.status.publishAt)
+                .map(v => ({
+                    id: v.id,
+                    title: v.snippet.title,
+                    scheduledTime: v.status.publishAt
+                }));
+        } catch (e) {
+            console.error('Failed to fetch scheduled uploads:', e);
+            return [];
+        }
     }
 
     async updateScheduledTime(videoId, token, newTime) {
