@@ -161,6 +161,17 @@ class App {
     }
 
     renderChannelNav(channels) {
+        // UI fail-safe: deduplicate by ID again before rendering
+        const uniqueChannels = [];
+        const seenIds = new Set();
+        for (const c of channels) {
+            if (!seenIds.has(c.id)) {
+                seenIds.add(c.id);
+                uniqueChannels.push(c);
+            }
+        }
+        channels = uniqueChannels;
+
         const nav = document.getElementById('channel-nav');
         const mobileNavList = document.getElementById('mobile-nav-list');
         

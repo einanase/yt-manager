@@ -10,8 +10,11 @@ export class YouTubeService {
             'https://www.googleapis.com/auth/youtube.readonly',
             'https://www.googleapis.com/auth/yt-analytics.readonly'
         ];
-        // Store multiple tokens as an array of objects: [{ token: '...', email: '...' }]
-        this.tokens = JSON.parse(localStorage.getItem('yt_access_tokens')) || [];
+        // Store multiple tokens as an array of objects
+        // Use v3 key to force a clean state for all users
+        this.tokens = JSON.parse(localStorage.getItem('yt_access_tokens_v3')) || [];
+        // Ensure all tokens are strings and unique
+        this.tokens = [...new Set(this.tokens.filter(t => typeof t === 'string' && t.length > 0))];
         this.isAuthenticated = this.tokens.length > 0;
         this.onAuthChange = null;
     }
@@ -41,14 +44,12 @@ export class YouTubeService {
                     }
                     if (response.access_token) {
                         const newToken = response.access_token;
+                        this.isAuthenticated = true;
+                        // Clean push: ensure no duplicates
                         if (!this.tokens.includes(newToken)) {
                             this.tokens.push(newToken);
-                            console.log('New token added. Total tokens:', this.tokens.length);
-                        } else {
-                            console.log('Token already exists in list');
                         }
-                        this.isAuthenticated = true;
-                        localStorage.setItem('yt_access_tokens', JSON.stringify(this.tokens));
+                        localStorage.setItem('yt_access_tokens_v3', JSON.stringify(this.tokens));
                         if (this.onAuthChange) this.onAuthChange(true);
                         resolve(newToken);
                     } else {
@@ -64,22 +65,26 @@ export class YouTubeService {
     logout() {
         this.tokens = [];
         this.isAuthenticated = false;
-        localStorage.removeItem('yt_access_tokens');
+        localStorage.removeItem('yt_access_tokens_v3');
         if (this.onAuthChange) this.onAuthChange(false);
     }
 
-    async fetchAPI(token, endpoint, params = {}) {
+    async fetchAPI(token, endpoint, params = {}, bypassCache = false) {
         const url = new URL(`https://www.googleapis.com/youtube/v3/${endpoint}`);
         Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
         
-        // Cache Check (5 minutes)
-        const cacheKey = `yt_cache_${endpoint}_${JSON.stringify(params)}_${token.substring(0, 10)}`;
-        const cached = sessionStorage.getItem(cacheKey);
-        if (cached) {
-            const { data, timestamp } = JSON.parse(cached);
-            if (Date.now() - timestamp < 5 * 60 * 1000) {
-                console.log(`Using cached data for ${endpoint}`);
-                return data;
+        // Cache Check (5 minutes) - V2 with full token identifier
+        const tokenIdent = token.slice(-32) + token.slice(0, 16);
+        const cacheKey = `yt_cache_v2_${endpoint}_${JSON.stringify(params)}_${tokenIdent}`;
+        
+        if (!bypassCache) {
+            const cached = sessionStorage.getItem(cacheKey);
+            if (cached) {
+                const { data, timestamp } = JSON.parse(cached);
+                if (Date.now() - timestamp < 5 * 60 * 1000) {
+                    console.log(`Using cached data (v2) for ${endpoint}`);
+                    return data;
+                }
             }
         }
 
@@ -96,7 +101,7 @@ export class YouTubeService {
             console.error('API Error Response:', data);
             if (res.status === 401) {
                 this.tokens = this.tokens.filter(t => t !== token);
-                localStorage.setItem('yt_access_tokens', JSON.stringify(this.tokens));
+                localStorage.setItem('yt_access_tokens_v3', JSON.stringify(this.tokens));
                 if (this.tokens.length === 0) this.isAuthenticated = false;
                 throw new Error('Unauthorized');
             }
@@ -127,10 +132,11 @@ export class YouTubeService {
         for (const token of this.tokens) {
             try {
                 console.log('Fetching with token:', token.substring(0, 10) + '...');
+                // Bypass cache for channel listing to ensure we see all new additions correctly
                 const data = await this.fetchAPI(token, 'channels', {
                     part: 'snippet,statistics',
                     mine: true
-                });
+                }, true); // Add a flag to bypass cache if needed, or just change fetchAPI
 
                 if (!data.items || data.items.length === 0) {
                     console.warn('No channels found for this token');
@@ -138,7 +144,7 @@ export class YouTubeService {
                 }
 
                 const channels = data.items.map(item => ({
-                    id: item.id,
+                    id: String(item.id).trim(), // Enforce string for Set deduplication
                     name: item.snippet.title,
                     subscribers: parseInt(item.statistics.subscriberCount),
                     thumbnail: item.snippet.thumbnails.default.url,
@@ -150,8 +156,19 @@ export class YouTubeService {
             }
         }
         
-        console.log('Total channels found:', allChannels.length);
-        return allChannels.length > 0 ? allChannels : [
+        // Deduplicate channels by ID (stricter)
+        const uniqueChannels = [];
+        const seenIds = new Set();
+        for (const channel of allChannels) {
+            const normalizedId = String(channel.id).trim();
+            if (normalizedId && !seenIds.has(normalizedId)) {
+                seenIds.add(normalizedId);
+                uniqueChannels.push(channel);
+            }
+        }
+        
+        console.log('Total unique channels found (v3):', uniqueChannels.length);
+        return uniqueChannels.length > 0 ? uniqueChannels : [
             { id: 'UC-EMPTY', name: 'チャンネルが見つかりません', subscribers: 0, token: null }
         ];
     }
