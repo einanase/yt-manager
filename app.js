@@ -240,12 +240,33 @@ class App {
     }
 
     async updateStats(channelId, token) {
-        const stats = await this.service.getChannelStats(channelId, token);
+        const [stats, trends] = await Promise.all([
+            this.service.getChannelStats(channelId, token),
+            this.service.getSubscriberAnalytics(channelId, token)
+        ]);
+
         const subCountEl = document.getElementById('subscriber-count');
         if (subCountEl) {
             const currentVal = parseInt(subCountEl.textContent.replace(/,/g, '')) || 0;
             this.animateValue(subCountEl, currentVal, stats.subscriberCount, 1000);
         }
+
+        this.updateTrendUI('sub-trend-day', trends.day);
+        this.updateTrendUI('sub-trend-month', trends.month);
+    }
+
+    updateTrendUI(elementId, value) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+
+        const valueEl = el.querySelector('.trend-value');
+        if (!valueEl) return;
+
+        const isPositive = value >= 0;
+        const absValue = Math.abs(value);
+        valueEl.textContent = `${isPositive ? '+' : '-'}${absValue.toLocaleString()}`;
+
+        el.className = `stats-trend ${isPositive ? 'positive' : 'negative'}`;
     }
 
     async updateVideos(channelId, token) {

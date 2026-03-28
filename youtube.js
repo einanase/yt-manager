@@ -347,4 +347,49 @@ export class YouTubeService {
         });
         return res.ok;
     }
+
+    async getSubscriberAnalytics(channelId, token) {
+        if (!token) return { day: 12, month: 450 }; // Sample data for preview
+
+        const today = new Date();
+        const startDate = new Date();
+        startDate.setDate(today.getDate() - 32); // Last 32 days to cover a full month + buffer
+        
+        try {
+            const url = new URL('https://youtubeanalytics.googleapis.com/v2/reports');
+            const params = {
+                ids: `channel==${channelId}`,
+                startDate: startDate.toISOString().split('T')[0],
+                endDate: today.toISOString().split('T')[0],
+                metrics: 'subscribersGained,subscribersLost',
+                dimensions: 'day'
+            };
+            Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+
+            const res = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            
+            if (data.error || !data.rows || data.rows.length === 0) {
+                console.warn('No subscriber analytics data found or error:', data.error);
+                return { day: 0, month: 0 };
+            }
+
+            // data.rows format: [ ["2026-03-27", 10, 2], ... ]
+            // Sort rows by date descending to get the most recent data point for "Yesterday"
+            const sortedRows = [...data.rows].sort((a, b) => b[0].localeCompare(a[0]));
+            
+            const latestDayChange = sortedRows[0][1] - sortedRows[0][2];
+            const totalMonthChange = data.rows.reduce((sum, row) => sum + (row[1] - row[2]), 0);
+
+            return {
+                day: latestDayChange,
+                month: totalMonthChange
+            };
+        } catch (e) {
+            console.error('Subscriber analytics fetch failed', e);
+            return { day: 0, month: 0 };
+        }
+    }
 }

@@ -205,13 +205,30 @@ h1, h2, h3, .logo-icon {
     font-family: 'Outfit', sans-serif;
 }
 
+.stats-trends-row {
+    display: flex;
+    gap: 16px;
+    margin-top: 12px;
+}
+
 .stats-trend {
-    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
     font-weight: 500;
 }
 
-.stats-trend.positive { color: var(--success); }
-.stats-trend.negative { color: var(--danger); }
+.trend-label {
+    color: var(--text-secondary);
+}
+
+.trend-value {
+    font-weight: 600;
+}
+
+.stats-trend.positive .trend-value { color: var(--success); }
+.stats-trend.negative .trend-value { color: var(--danger); }
 
 /* Table Styling */
 .video-performance-card {
